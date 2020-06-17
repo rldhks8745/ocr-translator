@@ -122,6 +122,8 @@ class CaptureWindow(QMainWindow):
             self.drawingText = False
             self.sX = e.pos().x()
             self.sY = e.pos().y()
+            self.eX = e.pos().x()
+            self.eY = e.pos().y()
 
     def mouseMoveEvent(self, e):
         if (e.buttons() & Qt.LeftButton) & self.drawing:
@@ -149,20 +151,29 @@ class CaptureWindow(QMainWindow):
             ptr.setsize(cvImage.byteCount())
             arr = np.array(ptr).reshape(cvH, cvW, 4)
             img = cv2.cvtColor(arr, cv2.COLOR_BGR2GRAY)
+            cv2.imshow('gray img', img)
 
             # cv2.destroyAllWindows()
             # cv2.namedWindow('cvImage')
             # cv2.imshow('cvImage', img)  # 화면을 보여준다.
 
-            self.translatedText = image_to_string(img, lang="eng")
+            img = cv2.resize(img, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+            (thresh, img) = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+            cv2.imshow('OTSU img', img)
+
+            out_img = cv2.GaussianBlur(img, (3, 3), 0)
+            (thresh, out_img) = cv2.threshold(out_img, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+            cv2.imshow('cvImage', out_img)
+
+            self.translatedText = image_to_string(out_img, config='--tessdata-dir "tessdata" -l eng --oem 3 --psm 3')
             print("translatedText1: ", self.translatedText)
             self.translatedText = self.translatedText.replace("[^a-zA-Z\s]", "") # 영어, 공백 빼고 다 제거
 
             if not self.translatedText.strip() == "" :
-                self.translatedText = papagoApi.translate(self.translatedText) # 번역
-
+                # self.translatedText = papagoApi.translate(self.translatedText) # 번역
+                #
                 self.translatedTextList = self.translatedText.split('\n') # 줄바꿈 split
-                print("translatedText2: ", self.translatedTextList)
+                # print("translatedText2: ", self.translatedTextList)
 
                 self.drawingText = True
                 self.update() # paintEvent 호출

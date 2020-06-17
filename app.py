@@ -16,9 +16,6 @@ thread = None
 
 def pressed_keys(e):
     global thread
-    for code in keyboard._pressed_events:
-        line = ', '.join(str(code))
-        print(line, e.name)
 
     if e.name == "esc":
         if not thread.isAlive():
@@ -30,8 +27,6 @@ def pressed_keys(e):
             thread = threading.Thread(target=captureImg)
             thread.daemon = True
             thread.start()
-
-    print(thread)
 
 keyboard.hook(pressed_keys)
 keyboard.wait('0')
